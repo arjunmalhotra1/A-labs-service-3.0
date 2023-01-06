@@ -1,0 +1,32 @@
+# Build the Go Binary
+FROM golang:1.17 as build_sales_api
+# When we are disabling CGO here it's more baggage than anything else.
+# We want to make sure that the binary isn't binding itself to anything related to that
+# Golang image.
+# It maybe something that we don't have to worry about today but in the past.
+ENV CGO_ENABLED 0
+# We will pass in the (version control reference-VCS_REF) build reference. 
+# It will map back to main.go variable.
+ARG BUILD_REF
+
+# Copy the source code into the container.
+#COPY . /service
+
+# Only thing we need to copy argubaly is "main.go".
+# When we move into a bigger project we will have to do a lot more.
+COPY . /service
+
+# Build the service binary
+WORKDIR /service
+RUN go build -ldflags "-X main.build={BUILD_REF}"
+
+# Run the Go Binary in Alpine.
+FROM alpine:3.14
+ARG BUILD_DATE
+ARG BUILD_REF
+COPY --from=build_sales_api /service /service/3.3-Write-Basic-Service-for-Testing
+WORKDIR /service/3.3-Write-Basic-Service-for-Testing
+CMD ["./3.3-Write-Basic-Service-for-Testing"]
+
+
+ 
